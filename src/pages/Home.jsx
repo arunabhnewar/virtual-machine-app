@@ -8,7 +8,13 @@ import UploadForm from "../components/UploadForm/UploadForm";
 const Home = () => {
   return (
     <>
-      <Container sx={{ marginTop: "20px" }}>
+      <Container
+        sx={{
+          marginTop: "20px",
+          background: "#FAF9F6",
+          padding: "20px 0px",
+          borderRadius: "15px",
+        }}>
         <Stack
           direction='row'
           justifyContent='space-between'

@@ -1,142 +1,49 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import FolderIcon from "@mui/icons-material/Folder";
-import { Typography } from "@mui/material";
+import { LinearProgress, List, ListItem, Typography } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import LinearProgress from "@mui/material/LinearProgress";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import Modal from "@mui/material/Modal";
 import Stack from "@mui/material/Stack";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-
-const containerStyle = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  border: "2px solid #ccc", // Solid border for the container
-  borderRadius: "15px",
-  padding: "15px",
-  width: "70%",
-  margin: "auto", // Center the container
-  marginTop: "20px", // Add margin for better spacing
-  height: "200px",
-};
-
-const dropzoneStyle = {
-  border: "2px dashed #ccc", // Dotted border for the drop zone
-  borderRadius: "4px",
-  padding: "5px",
-  textAlign: "center",
-  cursor: "pointer",
-  width: "98%",
-  height: "100%",
-};
-
-const uploadIcon = {
-  width: "2em",
-  height: "2em",
-  fill: "#424242",
-};
-
-const textMargin = {
-  marginTop: "0px",
-};
-
-const emailInput = {
-  width: "40%",
-  padding: "10px",
-};
-
-const AttachFileList = {
-  border: "1px solid #000",
-  marginBottom: "10px",
-  paddingTop: "0px",
-  paddingBottom: "0px",
-};
-
-//
-const UploadModal = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 550,
-  height: "auto",
-  bgcolor: "background.paper",
-  borderRadius: "5px",
-  boxShadow: 24,
-};
-
-const UploadModalTitle = {
-  textAlign: "center",
-  paddingTop: "15px",
-};
-
-const uploadModalText = {
-  textAlign: "center",
-  paddingTop: "30px",
-  width: "350px",
-  margin: "0 auto",
-  paddingBottom: "15px",
-  color: "#212121",
-  fontWeight: 500,
-};
-
-const analystEmail = {
-  fontSize: "22px",
-  fontWeight: 800,
-  textAlign: "center",
-  fontStyle: "italic",
-  paddingBottom: "25px",
-};
-
-const notifyTxt = {
-  textAlign: "center",
-  color: "#424242",
-};
+import toast, { Toaster } from "react-hot-toast";
 
 const UploadForm = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState({});
-  const [open, setOpen] = useState(false);
+  const [openUploadModal, setOpenUploadModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  console.log(uploadedFiles);
 
   const onDrop = useCallback(
     (acceptedFiles) => {
-      // Handle dropped files
       const newFiles = acceptedFiles.map((file) => ({
         name: file.name,
-        id: Date.now(),
+        id: `${Date.now()}-${Math.random()}`,
+        size: file.size,
         progress: 0,
       }));
-      setUploadedFiles([...uploadedFiles, ...newFiles]);
 
-      // Simulate file upload progress
+      setUploadedFiles((prevUploadedFiles) => [
+        ...prevUploadedFiles,
+        ...newFiles,
+      ]);
+
       newFiles.forEach((file) => {
         const interval = setInterval(() => {
-          file.progress += 5;
-          setUploadProgress((prevProgress) => ({
-            ...prevProgress,
-            [file.id]: file.progress,
-          }));
+          file.progress += 10;
+          setUploadedFiles((prevUploadedFiles) => [...prevUploadedFiles]);
           if (file.progress >= 100) {
             clearInterval(interval);
-            // Remove the progress bar after uploading is complete
-            setUploadProgress((prevProgress) => {
-              const { [file.id]: deletedFile, ...newProgress } = prevProgress;
-              return newProgress;
-            });
           }
-        }, 5000);
+        }, 100);
       });
     },
-    [uploadedFiles]
+    [setUploadedFiles]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -144,29 +51,88 @@ const UploadForm = () => {
     multiple: true,
   });
 
-  const handleDelete = (id) => {
-    setUploadedFiles((prevUploadedFiles) =>
-      prevUploadedFiles.filter((file) => file.id !== id)
-    );
-    setUploadProgress((prevProgress) => {
-      const { [id]: deletedFile, ...newProgress } = prevProgress;
-      return newProgress;
-    });
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(k)));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  //Upload Modal
-  const handleOpen = () => {
-    setOpen(true);
+  const handleOpenUploadModal = () => {
+    setOpenUploadModal(true);
   };
-  const handleClose = () => {
-    setOpen(false);
+
+  const handleCloseUploadModal = () => {
+    setOpenUploadModal(false);
+  };
+
+  const handleOpenDeleteModal = (file) => {
+    setSelectedFile(file);
+    setOpenDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setSelectedFile(null);
+    setOpenDeleteModal(false);
+  };
+
+  const handleDeleteFile = () => {
+    const deletedFileName = selectedFile?.name || "Unknown File";
+    setUploadedFiles((prevUploadedFiles) =>
+      prevUploadedFiles.filter((file) => file.id !== selectedFile.id)
+    );
+    handleCloseDeleteModal();
+    // Show success message
+    toast.success(`File "${deletedFileName}" deleted successfully!`);
+  };
+
+  const handleSubmitModal = () => {
+    setOpenUploadModal(false);
+    toast.success(
+      "Files successfully uploaded to the Server for review. You will be notified when they are available on your VM."
+    );
   };
 
   return (
     <>
+      {/* Toast Message */}
+      <Toaster
+        position='top-left'
+        toastOptions={{
+          style: {
+            width: "auto",
+            maxWidth: "600px",
+          },
+        }}
+      />
       <Box>
-        <div style={containerStyle}>
-          <div {...getRootProps()} style={dropzoneStyle}>
+        {/* File Drop Zone Area  */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            border: "2px solid #ccc",
+            borderRadius: "15px",
+            padding: "15px",
+            width: "80%",
+            margin: "auto",
+            marginTop: "20px",
+            height: "200px",
+            background: "#ffffff",
+          }}>
+          <Box
+            {...getRootProps()}
+            sx={{
+              border: "2px dashed #ccc",
+              borderRadius: "4px",
+              padding: "5px",
+              textAlign: "center",
+              cursor: "pointer",
+              width: "98%",
+              height: "100%",
+            }}>
             <input {...getInputProps()} />
 
             <Stack
@@ -182,19 +148,20 @@ const UploadForm = () => {
                 alignItems='center'
                 spacing={2}
                 textAlign='center'>
-                <FileUploadOutlinedIcon style={uploadIcon} />
-
+                <FileUploadOutlinedIcon
+                  sx={{ width: "2em", height: "2em", fill: "#424242" }}
+                />
                 <Typography variant='h6'>Drop your file(s) here</Typography>
               </Stack>
               <Box>
                 <Typography
                   variant='body2'
                   gutterBottom
-                  sx={{ color: "#616161" }}>
+                  sx={{ color: "#616161", marginBottom: "-15px" }}>
                   Accepted file formats xyz, xyz, xyz
                 </Typography>
               </Box>
-              <Box style={textMargin}>
+              <Box sx={{ marginTop: "0px" }}>
                 <Typography
                   variant='body2'
                   sx={{ color: "#616161" }}
@@ -202,7 +169,6 @@ const UploadForm = () => {
                   Maximum file size xyz GB
                 </Typography>
               </Box>
-
               <Stack
                 direction='row'
                 justifyContent='center'
@@ -222,37 +188,73 @@ const UploadForm = () => {
                 </Typography>
               </Stack>
             </Stack>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
+        {/* Attached File(s) List */}
         <Box sx={{ marginTop: "65px" }}>
           <Typography variant='h6' gutterBottom>
             Attached files
           </Typography>
 
-          <List>
-            {uploadedFiles?.map((file) => (
-              <ListItem key={file.id} style={AttachFileList}>
-                <ListItemText primary={file.name} />
-                {file.progress < 100 && (
-                  <LinearProgress
-                    variant='determinate'
-                    value={uploadProgress[file.id] || 0}
+          {/* List of files */}
+          {uploadedFiles.length > 0 ? (
+            <List>
+              {uploadedFiles.map((file) => (
+                <ListItem
+                  key={file.id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "95%",
+                    border: "1px solid #000",
+                    padding: "5px",
+                    marginBottom: "10px",
+                  }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ paddingLeft: "10px", fontWeight: "600" }}>
+                      {file.name}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ paddingLeft: "10px", fontWeight: "600" }}>
+                      {formatBytes(file.size)}
+                    </Typography>
+                    {file.progress < 100 && (
+                      <LinearProgress
+                        variant='determinate'
+                        value={file.progress}
+                        sx={{ width: "50%", marginLeft: "10px" }}
+                      />
+                    )}
+                  </Box>
+                  <DeleteIcon
+                    sx={{ fill: "#676262", cursor: "pointer" }}
+                    onClick={() => handleOpenDeleteModal(file)}
                   />
-                )}
-
-                <ListItemIcon>
-                  <IconButton onClick={() => handleDelete(file.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </ListItemIcon>
-              </ListItem>
-            ))}
-          </List>
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography
+              variant='body1'
+              sx={{ color: "#616161", fontSize: "0.875rem" }}
+              gutterBottom>
+              No Files Attached Yet
+            </Typography>
+          )}
         </Box>
 
         {/* Contact Information */}
-        <Box sx={{ marginTop: "100px" }}>
+        <Box sx={{ marginTop: "30px" }}>
           <Typography variant='h6' gutterBottom>
             What is the contact information of your project analyst?
           </Typography>
@@ -261,14 +263,18 @@ const UploadForm = () => {
             review them before they are available for use on your virtual
             machine
           </Typography>
-
+          {/* Enter email address input form */}
           <Box sx={{ marginTop: "15px", marginLeft: "35px" }}>
             <input
               type='email'
-              name=''
-              id=''
+              name='email'
+              id='email'
               placeholder='enter email address'
-              style={emailInput}
+              style={{
+                width: "40%",
+                padding: "10px",
+                border: "1px solid #000",
+              }}
             />
           </Box>
         </Box>
@@ -281,26 +287,47 @@ const UploadForm = () => {
           }}
         />
 
+        {/* Upload And Cancel Form */}
         <Stack
           direction='row'
           justifyContent='flex-end'
           alignItems='center'
           spacing={2}>
           <Button variant='outlined'>Cancel</Button>
-          <Button variant='contained' onClick={handleOpen}>
+          <Button variant='contained' onClick={handleOpenUploadModal}>
             Upload
           </Button>
         </Stack>
 
+        {/* Upload Data Modal */}
         <Modal
-          open={open}
-          onClose={handleClose}
-          aria-labelledby='parent-modal-title'
-          aria-describedby='parent-modal-description'>
-          <Box sx={{ ...UploadModal }}>
-            <h2 id='parent-modal-title' style={UploadModalTitle}>
-              Upload files to your database
-            </h2>
+          open={openUploadModal}
+          onClose={handleCloseUploadModal}
+          aria-labelledby='upload-modal-title'
+          aria-describedby='upload-modal-description'>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 550,
+              height: "auto",
+              bgcolor: "background.paper",
+              borderRadius: "5px",
+              boxShadow: 24,
+            }}>
+            <Typography
+              variant='h2'
+              sx={{
+                textAlign: "center",
+                paddingTop: "15px",
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                marginBottom: "18px",
+              }}>
+              Upload files to the database
+            </Typography>
 
             <Divider
               sx={{
@@ -309,17 +336,40 @@ const UploadForm = () => {
               }}
             />
 
-            <p id='parent-modal-description' style={uploadModalText}>
+            <Typography
+              variant='body2'
+              sx={{
+                textAlign: "center",
+                paddingTop: "30px",
+                width: "390px",
+                margin: "0 auto",
+                paddingBottom: "15px",
+                color: "#212121",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+              }}>
               This will upload the files for your project analyst to review. A
               notification will be sent to:
-            </p>
+            </Typography>
 
-            <p style={analystEmail}>analyst_first.last@mail.com</p>
+            <Typography
+              variant='body2'
+              sx={{
+                fontSize: "0.9rem",
+                fontWeight: 800,
+                textAlign: "center",
+                fontStyle: "italic",
+                paddingBottom: "25px",
+              }}>
+              analyst_first.last@mail.com
+            </Typography>
 
-            <p style={notifyTxt}>
+            <Typography
+              variant='body2'
+              sx={{ textAlign: "center", color: "#424242" }}>
               You will be notified when the files are available for use on your
               VM.
-            </p>
+            </Typography>
 
             <Divider
               sx={{
@@ -336,9 +386,69 @@ const UploadForm = () => {
               alignItems='center'
               spacing={2}
               marginBottom='20px'>
-              <Button variant='outlined'>Cancel</Button>
-              <Button variant='contained' onClick={handleOpen}>
+              <Button variant='outlined' onClick={handleCloseUploadModal}>
+                Cancel
+              </Button>
+              <Button variant='contained' onClick={handleSubmitModal}>
                 Upload
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        {/* Delete File Modal */}
+        <Modal
+          open={openDeleteModal}
+          onClose={handleCloseDeleteModal}
+          aria-labelledby='delete-modal-title'
+          aria-describedby='delete-modal-description'>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 550,
+              height: "auto",
+              bgcolor: "background.paper",
+              borderRadius: "5px",
+              boxShadow: 24,
+              display: "flex",
+              flexDirection: "column",
+            }}>
+            <Typography
+              variant='h5'
+              id='delete-modal-title'
+              sx={{
+                textAlign: "center",
+                paddingTop: "15px",
+                fontWeight: "600",
+              }}>
+              Delete this file?
+            </Typography>
+
+            <Typography
+              variant='body1'
+              id='delete-modal-title'
+              sx={{
+                textAlign: "center",
+                padding: "15px 10px 30px 10px",
+                fontSize: "1rem",
+              }}>
+              Delete file &quot;{selectedFile?.name}&quot;
+            </Typography>
+
+            <Stack
+              direction='row'
+              justifyContent='center'
+              alignItems='center'
+              spacing={2}
+              marginBottom='20px'>
+              <Button variant='outlined' onClick={handleCloseDeleteModal}>
+                Cancel
+              </Button>
+              <Button variant='contained' onClick={handleDeleteFile}>
+                Delete File
               </Button>
             </Stack>
           </Box>
@@ -347,5 +457,7 @@ const UploadForm = () => {
     </>
   );
 };
+
+/*  */
 
 export default UploadForm;
