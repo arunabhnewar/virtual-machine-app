@@ -12,15 +12,27 @@ import { useDropzone } from "react-dropzone";
 import toast, { Toaster } from "react-hot-toast";
 
 const UploadForm = () => {
+  // State to store the uploaded files
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  // State to manage the visibility of the file upload modal
+
   const [openUploadModal, setOpenUploadModal] = useState(false);
+  // State to manage the visibility of the file delete modal
+
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  // State to store the currently selected file for deletion
+
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // Log the uploaded files to the console for debugging purposes
   console.log(uploadedFiles);
+
+  // Callback function triggered when files are dropped onto the drop zone
 
   const onDrop = useCallback(
     (acceptedFiles) => {
+      // Create new file objects with additional properties
+
       const newFiles = acceptedFiles.map((file) => ({
         name: file.name,
         id: `${Date.now()}-${Math.random()}`,
@@ -28,6 +40,7 @@ const UploadForm = () => {
         progress: 0,
       }));
 
+      // Update the state with the new files
       setUploadedFiles((prevUploadedFiles) => [
         ...prevUploadedFiles,
         ...newFiles,
@@ -46,11 +59,13 @@ const UploadForm = () => {
     [setUploadedFiles]
   );
 
+  // Configuration for the drop zone using the useDropzone hook
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     multiple: true,
   });
 
+  // Function to format file size from bytes to a human-readable format
   const formatBytes = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -59,24 +74,29 @@ const UploadForm = () => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
+  // Function to open the file upload modal
   const handleOpenUploadModal = () => {
     setOpenUploadModal(true);
   };
 
+  // Function to close the file upload modal
   const handleCloseUploadModal = () => {
     setOpenUploadModal(false);
   };
 
+  // Function to open the file delete modal and set the selected file
   const handleOpenDeleteModal = (file) => {
     setSelectedFile(file);
     setOpenDeleteModal(true);
   };
 
+  // Function to close the file delete modal and reset the selected file
   const handleCloseDeleteModal = () => {
     setSelectedFile(null);
     setOpenDeleteModal(false);
   };
 
+  // Function to delete the selected file and update the state
   const handleDeleteFile = () => {
     const deletedFileName = selectedFile?.name || "Unknown File";
     setUploadedFiles((prevUploadedFiles) =>
@@ -87,6 +107,7 @@ const UploadForm = () => {
     toast.success(`File "${deletedFileName}" deleted successfully!`);
   };
 
+  // Function to handle the submission of the upload modal
   const handleSubmitModal = () => {
     setOpenUploadModal(false);
     toast.success(
@@ -192,8 +213,8 @@ const UploadForm = () => {
         </Box>
 
         {/* Attached File(s) List */}
-        <Box sx={{ marginTop: "65px" }}>
-          <Typography variant='h6' gutterBottom>
+        <Box sx={{ marginTop: "65px", marginLeft: "35px" }}>
+          <Typography variant='body1' sx={{ fontWeight: "600" }} gutterBottom>
             Attached files
           </Typography>
 
@@ -212,21 +233,17 @@ const UploadForm = () => {
                     padding: "5px",
                     marginBottom: "10px",
                   }}>
+                  {/* File Name */}
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      width: "100%",
+                      width: "85%",
                     }}>
                     <Typography
                       variant='body2'
                       sx={{ paddingLeft: "10px", fontWeight: "600" }}>
                       {file.name}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      sx={{ paddingLeft: "10px", fontWeight: "600" }}>
-                      {formatBytes(file.size)}
                     </Typography>
                     {file.progress < 100 && (
                       <LinearProgress
@@ -236,10 +253,26 @@ const UploadForm = () => {
                       />
                     )}
                   </Box>
-                  <DeleteIcon
-                    sx={{ fill: "#676262", cursor: "pointer" }}
-                    onClick={() => handleOpenDeleteModal(file)}
-                  />
+                  {/* File Size & Delete Icon */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                    }}>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        paddingLeft: "10px",
+                        fontWeight: "600",
+                        width: "80px",
+                      }}>
+                      {formatBytes(file.size)}
+                    </Typography>
+                    <DeleteIcon
+                      sx={{ fill: "#676262", cursor: "pointer" }}
+                      onClick={() => handleOpenDeleteModal(file)}
+                    />
+                  </Box>
                 </ListItem>
               ))}
             </List>
@@ -265,17 +298,31 @@ const UploadForm = () => {
           </Typography>
           {/* Enter email address input form */}
           <Box sx={{ marginTop: "15px", marginLeft: "35px" }}>
-            <input
-              type='email'
-              name='email'
-              id='email'
-              placeholder='enter email address'
-              style={{
+            <Box
+              sx={{
                 width: "40%",
-                padding: "10px",
-                border: "1px solid #000",
-              }}
-            />
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+              }}>
+              <input
+                type='email'
+                name='email'
+                id='email'
+                placeholder='enter email address'
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #000",
+                }}
+              />
+              {/* Email Service */}
+              <Typography
+                variant='body2'
+                sx={{ position: "absolute", right: "10px" }}>
+                @gmail.com
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
@@ -457,7 +504,5 @@ const UploadForm = () => {
     </>
   );
 };
-
-/*  */
 
 export default UploadForm;
