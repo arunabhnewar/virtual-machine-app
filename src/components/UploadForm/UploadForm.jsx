@@ -14,15 +14,18 @@ import toast, { Toaster } from "react-hot-toast";
 const UploadForm = () => {
   // State to store the uploaded files
   const [uploadedFiles, setUploadedFiles] = useState([]);
+
   // State to manage the visibility of the file upload modal
-
   const [openUploadModal, setOpenUploadModal] = useState(false);
+
   // State to manage the visibility of the file delete modal
-
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  // State to store the currently selected file for deletion
 
+  // State to store the currently selected file for deletion
   const [selectedFile, setSelectedFile] = useState(null);
+
+  // State to track whether the upload button is clicked
+  const [uploadButtonClicked, setUploadButtonClicked] = useState(false);
 
   // Log the uploaded files to the console for debugging purposes
   console.log(uploadedFiles);
@@ -110,6 +113,7 @@ const UploadForm = () => {
   // Function to handle the submission of the upload modal
   const handleSubmitModal = () => {
     setOpenUploadModal(false);
+    setUploadButtonClicked(true);
     toast.success(
       "Files successfully uploaded to the Server for review. You will be notified when they are available on your VM."
     );
@@ -153,6 +157,9 @@ const UploadForm = () => {
               cursor: "pointer",
               width: "98%",
               height: "100%",
+              "&:focus": {
+                outline: "2px solid red", // Add the desired focus style
+              },
             }}>
             <input {...getInputProps()} />
 
@@ -268,10 +275,11 @@ const UploadForm = () => {
                       }}>
                       {formatBytes(file.size)}
                     </Typography>
-                    <DeleteIcon
-                      sx={{ fill: "#676262", cursor: "pointer" }}
-                      onClick={() => handleOpenDeleteModal(file)}
-                    />
+                    <Button
+                      aria-label='Delete'
+                      onClick={() => handleOpenDeleteModal(file)}>
+                      <DeleteIcon sx={{ fill: "#676262", cursor: "pointer" }} />
+                    </Button>
                   </Box>
                 </ListItem>
               ))}
@@ -300,7 +308,9 @@ const UploadForm = () => {
           <Box sx={{ marginTop: "15px", marginLeft: "35px" }}>
             <Box
               sx={{
-                width: "40%",
+                width: "100%",
+                maxWidth: "450px",
+                minWidth: "200px",
                 position: "relative",
                 display: "flex",
                 alignItems: "center",
@@ -314,6 +324,8 @@ const UploadForm = () => {
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #000",
+                  boxShadow:
+                    "rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px",
                 }}
               />
               {/* Email Service */}
@@ -340,9 +352,30 @@ const UploadForm = () => {
           justifyContent='flex-end'
           alignItems='center'
           spacing={2}>
-          <Button variant='outlined'>Cancel</Button>
-          <Button variant='contained' onClick={handleOpenUploadModal}>
-            Upload
+          <Button
+            variant='outlined'
+            sx={{
+              background: "#ffffff",
+              boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+            }}>
+            Cancel
+          </Button>
+          <Button
+            disabled={uploadedFiles.length === 0}
+            sx={{
+              bgcolor: "#1976D2",
+              minWidth: "64px",
+              padding: "6px 16px",
+              "&:hover": {
+                background: "#1565C0",
+                boxShadow:
+                  "0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.1)",
+              },
+            }}
+            onClick={handleOpenUploadModal}>
+            <Typography variant='body' sx={{ color: "#ffffff" }}>
+              Upload
+            </Typography>
           </Button>
         </Stack>
 

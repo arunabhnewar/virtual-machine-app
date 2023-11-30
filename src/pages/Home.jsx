@@ -14,6 +14,8 @@ const Home = () => {
           background: "#FAF9F6",
           padding: "20px 0px",
           borderRadius: "15px",
+          boxShadow:
+            "rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px",
         }}>
         <Stack
           direction='row'
